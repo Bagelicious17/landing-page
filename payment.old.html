@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Aman - Pantau Dapur MBG ERP</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Page Transition Animation -->
+    <style>
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-transition {
+            animation: pageFadeIn 0.5s ease-out forwards;
+        }
+    </style>
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0A193A',
+                            light: '#9DCCD5',
+                            yellow: '#F3D38D',
+                            gray: '#F8FAFC',
+                            text: '#334155',
+                            bgLight: '#F4F7FB'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Montserrat', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 25px rgba(0,0,0,0.03)',
+                        'card': '0 10px 40px -10px rgba(0,0,0,0.06)',
+                        'inner-soft': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="font-sans text-brand-text bg-brand-bgLight antialiased min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Helper Komponen Ikon ---
+        const Icon = ({ name, className }) => {
+            const iconRef = useRef(null);
+            
+            useEffect(() => {
+                if (iconRef.current) {
+                    iconRef.current.innerHTML = '';
+                    lucide.createIcons({
+                        icons: { [name]: lucide.icons[name] },
+                        nameAttr: 'data-lucide',
+                        attrs: { class: className, 'stroke-width': 2 }
+                    });
+                    const svgElement = document.querySelector(`[data-lucide="${name}"]`);
+                    if(svgElement && iconRef.current){
+                         const clone = svgElement.cloneNode(true);
+                         iconRef.current.appendChild(clone);
+                         svgElement.remove(); 
+                    }
+                }
+            }, [name, className]);
+
+            // Fallback SVG murni
+            const renderFallbackSvg = () => {
+                switch(name) {
+                    case 'ArrowLeft': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>;
+                    case 'Lock': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>;
+                    case 'Check': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>;
+                    case 'CreditCard': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>;
+                    case 'Landmark': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 21h16M4 18h16M5 18v-9m14 9v-9M9 18v-9m6 9v-9M3 9l9-6 9 6H3z"></path></svg>;
+                    case 'Wallet': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>;
+                    case 'HelpCircle': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>;
+                    case 'ShieldCheck': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>;
+                    case 'Headphones': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 18v-6a9 9 0 0118 0v6M3 18a2 2 0 002 2h3a2 2 0 002-2v-4a2 2 0 00-2-2H5M21 18a2 2 0 01-2 2h-3a2 2 0 01-2-2v-4a2 2 0 012-2h3"></path></svg>;
+                    case 'Settings': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
+                    case 'Menu': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>;
+                    case 'X': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>;
+                    default: return null;
+                }
+            };
+
+            return <div ref={iconRef} className="inline-flex items-center justify-center">{renderFallbackSvg()}</div>;
+        };
+
+        // --- Navbar untuk Checkout ---
+        const Navbar = () => {
+            const [isScrolled, setIsScrolled] = useState(false);
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    setIsScrolled(window.scrollY > 20);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            return (
+                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-white py-5 border-b border-gray-200'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center">
+                            {/* Logo */}
+                            <div className="flex items-center gap-2">
+                                <a href="index.html" className="flex items-center gap-2">
+                                    <img src="../aset/logo-erp-main.png" alt="Logo" className="h-10" />
+                                    <span className="font-heading font-bold text-xl text-brand-dark">Pantau Dapur MBG</span>
+                                </a>
+                            </div>
+
+                            {/* Navigasi Tengah (hidden on mobile) */}
+                            <div className="hidden md:flex space-x-8">
+                                <a href="index.html" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Fitur</a>
+                                <a href="pricing.html" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Harga</a>
+                                <a href="#" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Tentang Kami</a>
+                            </div>
+
+                            {/* Tombol Aksi Desktop */}
+                            <div className="hidden md:flex items-center space-x-4">
+                                <a href="#" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Masuk</a>
+                                <a href="pricing.html" className="flex items-center gap-2 text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">
+                                    <Icon name="ArrowLeft" className="w-4 h-4" /> Kembali
+                                </a>
+                            </div>
+
+                            {/* Tombol Menu Mobile */}
+                            <div className="md:hidden flex items-center">
+                                <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-brand-dark">
+                                    <Icon name={mobileMenuOpen ? 'X' : 'Menu'} className="w-6 h-6" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Menu Mobile */}
+                    {mobileMenuOpen && (
+                        <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-lg">
+                            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                                <a href="index.html" className="block px-3 py-2 text-base font-medium text-brand-text hover:text-brand-dark hover:bg-gray-50 rounded-md">Fitur</a>
+                                <a href="pricing.html" className="block px-3 py-2 text-base font-medium text-brand-text hover:text-brand-dark hover:bg-gray-50 rounded-md">Harga</a>
+                                <a href="#" className="block px-3 py-2 text-base font-medium text-brand-text hover:text-brand-dark hover:bg-gray-50 rounded-md">Tentang Kami</a>
+                                <div className="mt-4 pt-4 border-t border-gray-100 px-3 flex flex-col gap-2">
+                                    <a href="#" className="block text-center px-3 py-2 text-base font-medium text-brand-dark border border-gray-200 rounded-md">Masuk</a>
+                                    <a href="pricing.html" className="block text-center px-3 py-2 text-base font-medium bg-brand-dark text-white rounded-md">Kembali ke Paket</a>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </nav>
+            );
+        };
+
+        // --- Header Checkout Info ---
+        const CheckoutHeader = () => {
+            return (
+                <div className="pt-28 pb-6">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                        {/* Judul & Badge */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h1 className="text-3xl font-heading font-extrabold text-brand-dark mb-1">Checkout Aman</h1>
+                                <p className="text-brand-text">Selesaikan langganan Anda ke Dapur MBG Kitchen ERP.</p>
+                            </div>
+                            
+                            <div className="inline-flex items-center gap-2 bg-yellow-50 border border-brand-yellow/30 text-yellow-800 px-4 py-2 rounded-md self-start md:self-auto shadow-sm">
+                                <Icon name="Lock" className="w-4 h-4 text-brand-yellow" />
+                                <span className="text-sm font-semibold">256-bit SSL Terenkripsi</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Stepper Checkout ---
+        const CheckoutStepper = () => {
+            return (
+                <div className="bg-white rounded-xl border border-gray-200 p-6 flex items-center justify-between shadow-soft mb-6 relative overflow-hidden">
+                    {/* Garis Konektor (Background) */}
+                    <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -translate-y-1/2 z-0"></div>
+                    <div className="absolute top-1/2 left-0 w-1/2 h-0.5 bg-brand-dark -translate-y-1/2 z-0"></div>
+
+                    {/* Step 1: Paket (Selesai) */}
+                    <div className="relative z-10 flex flex-col items-center bg-white px-2 sm:px-4">
+                        <div className="w-8 h-8 rounded-full bg-brand-yellow text-brand-dark flex items-center justify-center mb-2 shadow-sm border border-brand-yellow/50">
+                            <Icon name="Check" className="w-4 h-4" />
+                        </div>
+                        <span className="text-xs font-bold tracking-widest uppercase text-brand-dark">PAKET</span>
+                    </div>
+
+                    {/* Step 2: Pembayaran (Aktif) */}
+                    <div className="relative z-10 flex flex-col items-center bg-white px-2 sm:px-4">
+                        <div className="w-8 h-8 rounded-full bg-brand-dark text-white flex items-center justify-center mb-2 shadow-sm font-bold text-sm">
+                            2
+                        </div>
+                        <span className="text-xs font-bold tracking-widest uppercase text-brand-dark">PEMBAYARAN</span>
+                    </div>
+
+                    {/* Step 3: Konfirmasi (Belum) */}
+                    <div className="relative z-10 flex flex-col items-center bg-white px-2 sm:px-4">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-300 text-gray-400 flex items-center justify-center mb-2 font-bold text-sm">
+                            3
+                        </div>
+                        <span className="text-xs font-bold tracking-widest uppercase text-gray-400">KONFIRMASI</span>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Komponen Pilihan Metode Pembayaran ---
+        const PaymentMethods = () => {
+            const [selectedMethod, setSelectedMethod] = useState('credit_card');
+
+            return (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-soft overflow-hidden mb-6">
+                    <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center gap-3">
+                        <Icon name="Wallet" className="w-5 h-5 text-brand-dark" />
+                        <h2 className="text-lg font-heading font-bold text-brand-dark">Pilih Metode Pembayaran</h2>
+                    </div>
+
+                    <div className="p-6 space-y-4">
+                        
+                        {/* 1. Kartu Kredit */}
+                        <div className={`border rounded-lg overflow-hidden transition-colors ${selectedMethod === 'credit_card' ? 'border-brand-dark bg-brand-bgLight/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                            <label className="flex items-center justify-between p-4 cursor-pointer">
+                                <div className="flex items-center gap-3">
+                                    <input 
+                                        type="radio" 
+                                        name="payment_method" 
+                                        value="credit_card"
+                                        checked={selectedMethod === 'credit_card'}
+                                        onChange={() => setSelectedMethod('credit_card')}
+                                        className="w-4 h-4 text-brand-dark focus:ring-brand-dark border-gray-300" 
+                                    />
+                                    <span className="font-semibold text-brand-dark text-sm">Kartu Kredit</span>
+                                </div>
+                                <Icon name="CreditCard" className="w-5 h-5 text-gray-500" />
+                            </label>
+                            
+                            {/* Form Kartu Kredit (Expanded) */}
+                            {selectedMethod === 'credit_card' && (
+                                <div className="px-4 pb-5 pt-2 border-t border-gray-200/50">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold tracking-wider text-brand-dark uppercase mb-1">Nomor Kartu</label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                                    <Icon name="CreditCard" className="w-4 h-4" />
+                                                </div>
+                                                <input type="text" placeholder="0000 0000 0000 0000" className="w-full pl-10 pr-4 py-2.5 rounded border border-gray-300 focus:ring-1 focus:ring-brand-dark focus:border-brand-dark text-sm" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold tracking-wider text-brand-dark uppercase mb-1">Masa Berlaku</label>
+                                                <input type="text" placeholder="MM/YY" className="w-full px-4 py-2.5 rounded border border-gray-300 focus:ring-1 focus:ring-brand-dark focus:border-brand-dark text-sm" />
+                                            </div>
+                                            <div>
+                                                <label className="flex justify-between items-center text-xs font-bold tracking-wider text-brand-dark uppercase mb-1">
+                                                    CVV
+                                                    <Icon name="HelpCircle" className="w-3.5 h-3.5 text-gray-400" />
+                                                </label>
+                                                <input type="text" placeholder="123" className="w-full px-4 py-2.5 rounded border border-gray-300 focus:ring-1 focus:ring-brand-dark focus:border-brand-dark text-sm" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold tracking-wider text-brand-dark uppercase mb-1">Nama Pemilik Kartu</label>
+                                            <input type="text" placeholder="Nama yang tertera pada kartu" className="w-full px-4 py-2.5 rounded border border-gray-300 focus:ring-1 focus:ring-brand-dark focus:border-brand-dark text-sm" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 2. Bank Transfer (VA) */}
+                        <div className={`border rounded-lg overflow-hidden transition-colors ${selectedMethod === 'bank_transfer' ? 'border-brand-dark bg-brand-bgLight/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                            <label className="flex items-center justify-between p-4 cursor-pointer">
+                                <div className="flex items-center gap-3">
+                                    <input 
+                                        type="radio" 
+                                        name="payment_method" 
+                                        value="bank_transfer"
+                                        checked={selectedMethod === 'bank_transfer'}
+                                        onChange={() => setSelectedMethod('bank_transfer')}
+                                        className="w-4 h-4 text-brand-dark focus:ring-brand-dark border-gray-300" 
+                                    />
+                                    <span className="font-semibold text-brand-dark text-sm">Transfer Bank (Virtual Account)</span>
+                                </div>
+                                <Icon name="Landmark" className="w-5 h-5 text-gray-500" />
+                            </label>
+                        </div>
+
+                        {/* 3. E-Wallet */}
+                        <div className={`border rounded-lg overflow-hidden transition-colors ${selectedMethod === 'ewallet' ? 'border-brand-dark bg-brand-bgLight/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                            <label className="flex items-center justify-between p-4 cursor-pointer">
+                                <div className="flex items-center gap-3">
+                                    <input 
+                                        type="radio" 
+                                        name="payment_method" 
+                                        value="ewallet"
+                                        checked={selectedMethod === 'ewallet'}
+                                        onChange={() => setSelectedMethod('ewallet')}
+                                        className="w-4 h-4 text-brand-dark focus:ring-brand-dark border-gray-300" 
+                                    />
+                                    <span className="font-semibold text-brand-dark text-sm">E-Wallet (Gopay / OVO)</span>
+                                </div>
+                                <div className="w-5 h-5 bg-gray-200 rounded flex items-center justify-center text-[8px] font-bold text-gray-500">eW</div>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Komponen Informasi Penagihan (Billing Info) ---
+        const BillingInfo = () => {
+            return (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-soft overflow-hidden">
+                    <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Icon name="Landmark" className="w-5 h-5 text-brand-dark" />
+                            <h2 className="text-lg font-heading font-bold text-brand-dark">Informasi Penagihan</h2>
+                        </div>
+                        <button className="text-sm font-semibold text-brand-dark hover:underline">Edit</button>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
+                            <div>
+                                <p className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-1">Nama Perusahaan</p>
+                                <p className="font-semibold text-brand-dark text-sm">Bistro Enigma</p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-1">Email</p>
+                                <p className="font-semibold text-brand-dark text-sm">finance@bistroenigma.com</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-1">Alamat</p>
+                            <p className="font-medium text-brand-text text-sm leading-relaxed">
+                                Jl. Sudirman No. 45, Tower B, Lt. 12<br/>
+                                Jakarta Selatan, DKI Jakarta 12190
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Komponen Ringkasan Pesanan (Order Summary) ---
+        const OrderSummary = () => {
+            return (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-card sticky top-6">
+                    <div className="p-6 border-b border-gray-200">
+                        <h2 className="text-xl font-heading font-bold text-brand-dark">Ringkasan Pesanan</h2>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 className="text-2xl font-heading font-bold text-brand-dark">Paket Enterprise</h3>
+                                <p className="text-sm text-brand-text">Langganan Tahunan</p>
+                            </div>
+                            <span className="font-bold text-brand-dark">IDR 24.000.000</span>
+                        </div>
+                        
+                        <div className="my-6 border-t border-b border-gray-100 py-4 space-y-3">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-brand-text">Paket Dasar (12 bulan)</span>
+                                <span className="font-medium text-brand-dark">IDR 20.000.000</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-brand-text">Modul KDS Add-on</span>
+                                <span className="font-medium text-brand-dark">IDR 4.000.000</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-brand-yellow font-medium">Diskon Tahunan (15%)</span>
+                                <span className="text-brand-yellow font-medium">- IDR 3.600.000</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 mb-6">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-brand-text">Subtotal</span>
+                                <span className="font-medium text-brand-dark">IDR 20.400.000</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-brand-text">PPN (11%)</span>
+                                <span className="font-medium text-brand-dark">IDR 2.244.000</span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between items-end mb-8">
+                            <span className="text-lg font-bold text-brand-dark">Total</span>
+                            <span className="text-3xl font-heading font-extrabold text-brand-dark tracking-tight">IDR 22.644.000</span>
+                        </div>
+
+                        <button className="w-full bg-brand-dark text-white py-4 rounded-lg font-bold text-lg hover:bg-brand-dark/90 transition-all shadow-md flex justify-center items-center gap-2 mb-4">
+                            <Icon name="Lock" className="w-5 h-5" /> Bayar Sekarang
+                        </button>
+
+                        <p className="text-xs text-center text-gray-500 px-4 leading-relaxed">
+                            Dengan mengklik "Bayar Sekarang", Anda menyetujui Syarat Layanan dan Kebijakan Privasi kami.
+                        </p>
+                    </div>
+
+                    <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-xl flex justify-center gap-6">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <Icon name="ShieldCheck" className="w-4 h-4" /> Pembayaran Aman
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            <Icon name="Headphones" className="w-4 h-4" /> Dukungan 24/7
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Komponen Footer Minimalis ---
+        const FooterMinimal = () => {
+            return (
+                <footer className="w-full py-8 mt-12 bg-white border-t border-gray-200">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="font-heading font-bold text-brand-dark text-lg">
+                            Dapur MBG
+                        </div>
+                        <p className="text-xs text-gray-500 text-center">
+                            2026 Dapur MBG Kitchen ERP. Presisi Klinis untuk Dapur Profesional.
+                        </p>
+                        <div className="flex space-x-4 text-xs text-gray-500">
+                            <a href="#" className="hover:text-brand-dark transition-colors">Kebijakan Privasi</a>
+                            <a href="#" className="hover:text-brand-dark transition-colors">Syarat Layanan</a>
+                            <a href="#" className="hover:text-brand-dark transition-colors">Bantuan</a>
+                            <a href="#" className="hover:text-brand-dark transition-colors">Keamanan</a>
+                        </div>
+                    </div>
+                </footer>
+            );
+        };
+
+        // --- Render Utama ---
+        const App = () => {
+            return (
+                <div className="min-h-screen flex flex-col page-transition">
+                    <Navbar />
+                    <CheckoutHeader />
+                    
+                    <main className="flex-grow pb-8">
+                        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                                
+                                {/* Kolom Kiri: Form & Informasi */}
+                                <div className="lg:col-span-7 xl:col-span-8">
+                                    <CheckoutStepper />
+                                    <PaymentMethods />
+                                    <BillingInfo />
+                                </div>
+
+                                {/* Kolom Kanan: Rincian Harga */}
+                                <div className="lg:col-span-5 xl:col-span-4">
+                                    <OrderSummary />
+                                </div>
+
+                            </div>
+                        </div>
+                    </main>
+
+                    <FooterMinimal />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

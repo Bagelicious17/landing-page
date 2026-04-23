@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantau Dapur MBG ERP</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Configuration based on Brand Guidelines -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0A193A',
+                            light: '#9DCCD5',
+                            yellow: '#F3D38D',
+                            gray: '#F8FAFC',
+                            text: '#334155'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Montserrat', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.05)',
+                        'glow': '0 0 20px rgba(243, 211, 141, 0.3)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS for Animations -->
+    <style>
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
+
+        /* Custom subtle background blob for hero */
+        .bg-blob {
+            position: absolute;
+            top: -10%;
+            right: -5%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(157,204,213,0.15) 0%, rgba(255,255,255,0) 70%);
+            z-index: -1;
+            border-radius: 50%;
+        }
+
+        /* Page Transition Animation */
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-transition {
+            animation: pageFadeIn 0.5s ease-out forwards;
+        }
+    </style>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="font-sans text-brand-text bg-white antialiased overflow-x-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Custom Hook untuk Animasi Scroll ---
+        const useScrollReveal = () => {
+            const ref = useRef(null);
+            
+            useEffect(() => {
+                const observer = new IntersectionObserver(
+                    ([entry]) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('active');
+                            // Hentikan observasi setelah animasi berjalan sekali
+                            observer.unobserve(entry.target);
+                        }
+                    },
+                    {
+                        root: null,
+                        rootMargin: '0px',
+                        threshold: 0.15, // Memicu saat 15% elemen terlihat
+                    }
+                );
+
+                if (ref.current) {
+                    observer.observe(ref.current);
+                }
+
+                return () => {
+                    if (ref.current) observer.unobserve(ref.current);
+                };
+            }, []);
+
+            return ref;
+        };
+
+        // --- Komponen Pembungkus Animasi ---
+        const Reveal = ({ children, className = '', delay = '' }) => {
+            const ref = useScrollReveal();
+            return (
+                <div ref={ref} className={`reveal ${delay} ${className}`}>
+                    {children}
+                </div>
+            );
+        };
+
+        // --- Komponen Ikon (Menggunakan Lucide secara manual untuk environment ini) ---
+        const Icon = ({ name, className }) => {
+            const iconRef = useRef(null);
+            
+            useEffect(() => {
+                if (iconRef.current) {
+                    // Membersihkan SVG sebelumnya
+                    iconRef.current.innerHTML = '';
+                    // Membuat ikon baru
+                    lucide.createIcons({
+                        icons: { [name]: lucide.icons[name] },
+                        nameAttr: 'data-lucide',
+                        attrs: {
+                            class: className,
+                            'stroke-width': 2
+                        }
+                    });
+                    
+                    // Ekstrak elemen SVG yang dihasilkan lucide
+                    const svgElement = document.querySelector(`[data-lucide="${name}"]`);
+                    if(svgElement && iconRef.current){
+                         // Kloning node karena lucide.createIcons menempatkannya di suatu tempat, kita butuh di ref kita
+                         const clone = svgElement.cloneNode(true);
+                         iconRef.current.appendChild(clone);
+                         svgElement.remove(); // Hapus yang asli agar tidak double
+                    }
+                }
+            }, [name, className]);
+
+            // Fallback sederhana jika script lucide gagal atau loading
+            const renderFallbackSvg = () => {
+                switch(name) {
+                    case 'Settings': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
+                    case 'Menu': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>;
+                    case 'X': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>;
+                    case 'Package': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>;
+                    case 'LayoutGrid': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeWidth="2"></rect><rect x="14" y="3" width="7" height="7" rx="1" strokeWidth="2"></rect><rect x="14" y="14" width="7" height="7" rx="1" strokeWidth="2"></rect><rect x="3" y="14" width="7" height="7" rx="1" strokeWidth="2"></rect></svg>;
+                    case 'CalendarDays': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2"></rect><line x1="16" y1="2" x2="16" y2="6" strokeWidth="2"></line><line x1="8" y1="2" x2="8" y2="6" strokeWidth="2"></line><line x1="3" y1="10" x2="21" y2="10" strokeWidth="2"></line><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" strokeWidth="2" strokeLinecap="round"></path></svg>;
+                    case 'BarChart3': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3v18h18"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 17V9"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 17V5"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 17v-3"></path></svg>;
+                    default: return null;
+                }
+            };
+
+            return (
+                <div ref={iconRef} className="inline-flex items-center justify-center">
+                    {renderFallbackSvg()}
+                </div>
+            );
+        };
+
+        // --- Komponen Navbar ---
+        const Navbar = () => {
+            const [isScrolled, setIsScrolled] = useState(false);
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    setIsScrolled(window.scrollY > 20);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            return (
+                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center">
+                            
+                            <div className="flex items-center gap-2">
+                                <img src="../aset/logo-erp-main.png" alt="Logo" className="h-10" />
+                                <span className="font-heading font-bold text-xl text-brand-dark">Pantau Dapur MBG</span>
+                            </div>
+
+                            {/* Navigasi Desktop */}
+                            <div className="hidden md:flex space-x-8">
+                                <a href="#" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Fitur</a>
+                                <a href="pricing.html" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Harga</a>
+                                <a href="#" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Tentang Kami</a>
+                            </div>
+
+                            {/* Tombol Aksi Desktop */}
+                            <div className="hidden md:flex items-center space-x-4">
+                                <a href="#" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Masuk</a>
+                                <a href="registration.html" className="bg-brand-dark text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-brand-dark/90 transition-all shadow-md hover:shadow-lg">
+                                    Daftar
+                                </a>
+                            </div>
+
+                            {/* Tombol Menu Mobile */}
+                            <div className="md:hidden flex items-center">
+                                <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-brand-dark">
+                                    <Icon name={mobileMenuOpen ? 'X' : 'Menu'} className="w-6 h-6" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Menu Mobile */}
+                    {mobileMenuOpen && (
+                        <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-lg">
+                            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                                <a href="#" className="block px-3 py-2 text-base font-medium text-brand-text hover:text-brand-dark hover:bg-gray-50 rounded-md">Fitur</a>
+                                <a href="#" className="block px-3 py-2 text-base font-medium text-brand-text hover:text-brand-dark hover:bg-gray-50 rounded-md">Harga</a>
+                                <a href="#" className="block px-3 py-2 text-base font-medium text-brand-text hover:text-brand-dark hover:bg-gray-50 rounded-md">Tentang Kami</a>
+                                <div className="mt-4 pt-4 border-t border-gray-100 px-3 flex flex-col gap-2">
+                                    <a href="#" className="block text-center px-3 py-2 text-base font-medium text-brand-dark border border-gray-200 rounded-md">Masuk</a>
+                                    <a href="registration.html" className="block text-center px-3 py-2 text-base font-medium bg-brand-dark text-white rounded-md">Mulai Sekarang</a>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </nav>
+            );
+        };
+
+        // --- Komponen Bagian Utama (Hero) ---
+        const HeroSection = () => {
+            return (
+                <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+                    <div className="bg-blob"></div>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+                            
+                            {/* Teks Hero */}
+                            <div className="max-w-2xl">
+                                <Reveal>
+                                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-heading font-extrabold text-brand-dark leading-tight tracking-tight mb-6">
+                                        Presisi Klinis untuk <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-dark to-brand-light">Dapur Profesional.</span>
+                                    </h1>
+                                </Reveal>
+                                <Reveal delay="delay-100">
+                                    <p className="text-lg text-brand-text mb-8 leading-relaxed">
+                                        Dapur MBG adalah solusi <em>enterprise resource planning</em> yang dirancang khusus untuk lingkungan kuliner bervolume tinggi. Integrasikan inventaris, kalkulasi biaya resep, dan penjadwalan staf dalam satu platform yang tangguh.
+                                    </p>
+                                </Reveal>
+                                <Reveal delay="delay-200" className="flex flex-col sm:flex-row gap-4">
+                                    <a href="#" className="inline-flex justify-center items-center px-8 py-3.5 border border-transparent text-base font-medium rounded-md text-brand-dark bg-brand-yellow hover:bg-[#ebd59b] transition-colors shadow-glow">
+                                        Mulai Sekarang
+                                    </a>
+                                    
+                                </Reveal>
+                            </div>
+
+                            {/* Gambar Hero */}
+                            <Reveal delay="delay-300" className="relative lg:ml-auto w-full max-w-lg lg:max-w-none">
+                                <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl relative">
+                                    {/* Overlay gradien halus */}
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-brand-dark/20 to-transparent z-10 mix-blend-multiply"></div>
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
+                                        alt="Chef profesional sedang menyiapkan hidangan" 
+                                        className="w-full h-full object-cover object-center"
+                                    />
+                                </div>
+                                {/* Elemen dekoratif */}
+                                <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-brand-light/20 rounded-full blur-xl z-0"></div>
+                                <div className="absolute -top-6 -right-6 w-32 h-32 bg-brand-yellow/20 rounded-full blur-xl z-0"></div>
+                            </Reveal>
+
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Komponen Bagian Fitur ---
+        const FeaturesSection = () => {
+            return (
+                <section className="py-20 bg-brand-gray/50 border-t border-gray-100">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        
+                        <Reveal className="text-center max-w-3xl mx-auto mb-16">
+                            <h2 className="text-3xl font-heading font-bold text-brand-dark mb-4">Kendalikan Dapur Anda</h2>
+                            <p className="text-lg text-brand-text">
+                                Semua yang Anda butuhkan untuk menjalankan dapur profesional berefisiensi tinggi, terintegrasi sempurna dalam satu antarmuka klinis.
+                            </p>
+                        </Reveal>
+
+                        {/* Grid Fitur */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            {/* Kartu 1: Inventaris */}
+                            <Reveal delay="delay-100" className="bg-white rounded-2xl p-8 shadow-soft border border-gray-100 relative overflow-hidden group hover:shadow-md transition-shadow">
+                                <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-10 bg-[url('https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80')] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"></div>
+                                <div className="relative z-10">
+                                    <div className="w-12 h-12 rounded-lg bg-brand-yellow/20 flex items-center justify-center mb-6 text-brand-dark">
+                                        <Icon name="Package" className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-xl font-heading font-bold text-brand-dark mb-3">Manajemen Inventaris Real-Time</h3>
+                                    <p className="text-brand-text leading-relaxed max-w-sm">
+                                        Lacak bahan baku hingga ke satuan gram. Terima peringatan sebelum stok kritis habis, memastikan Anda tidak pernah kehabisan menu secara tidak terduga.
+                                    </p>
+                                </div>
+                            </Reveal>
+
+                            {/* Kartu 2: Kalkulasi Biaya */}
+                            <Reveal delay="delay-200" className="bg-white rounded-2xl p-8 shadow-soft border border-gray-100 hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 rounded-lg bg-brand-yellow/20 flex items-center justify-center mb-6 text-brand-dark">
+                                    <Icon name="LayoutGrid" className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-heading font-bold text-brand-dark mb-3">Kalkulasi Biaya Resep Dinamis</h3>
+                                <p className="text-brand-text leading-relaxed">
+                                    Analisis margin keuntungan secara instan saat harga bahan baku berfluktuasi. Pertahankan penataan piring (plating) dan profit yang sempurna.
+                                </p>
+                            </Reveal>
+
+                            {/* Kartu 3: Penjadwalan */}
+                            <Reveal delay="delay-100" className="bg-white rounded-2xl p-8 shadow-soft border border-gray-100 hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 rounded-lg bg-brand-yellow/20 flex items-center justify-center mb-6 text-brand-dark">
+                                    <Icon name="CalendarDays" className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-heading font-bold text-brand-dark mb-3">Penjadwalan Staf Optimal</h3>
+                                <p className="text-brand-text leading-relaxed">
+                                    Prediksi kebutuhan tenaga kerja berdasarkan data penjualan historis. Kurangi lembur dan pastikan pos-pos penting selalu terjaga saat jam sibuk.
+                                </p>
+                            </Reveal>
+
+                            {/* Kartu 4: Dashboard (Gelap) */}
+                            <Reveal delay="delay-200" className="bg-brand-dark rounded-2xl p-8 shadow-xl relative overflow-hidden">
+                                <div className="relative z-10">
+                                    <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center mb-6 text-brand-yellow">
+                                        <Icon name="BarChart3" className="w-6 h-6" />
+                                    </div>
+                                    <h3 className="text-xl font-heading font-bold text-white mb-3">Dashboard Laporan Eksekutif</h3>
+                                    <p className="text-brand-light leading-relaxed max-w-sm mb-8">
+                                        Dapatkan tampilan menyeluruh (top-down) kinerja dapur. Lacak waktu penyelesaian pesanan, pengurangan limbah, dan profitabilitas keseluruhan dengan visualisasi data tingkat perusahaan.
+                                    </p>
+                                </div>
+                                {/* Ilustrasi Grafik Batang Minimalis */}
+                                <div className="absolute bottom-0 right-8 flex items-end gap-3 opacity-90">
+                                    <div className="w-12 bg-brand-yellow/80 rounded-t-sm h-16 animate-pulse" style={{animationDuration: '3s'}}></div>
+                                    <div className="w-12 bg-brand-yellow/90 rounded-t-sm h-24 animate-pulse" style={{animationDuration: '2.5s', animationDelay: '0.2s'}}></div>
+                                    <div className="w-12 bg-brand-yellow rounded-t-sm h-32 animate-pulse" style={{animationDuration: '2.8s', animationDelay: '0.4s'}}></div>
+                                </div>
+                            </Reveal>
+
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Komponen Testimoni ---
+        const TestimonialSection = () => {
+            return (
+                <section className="py-24 bg-white">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <Reveal className="text-center mb-16">
+                            <h2 className="text-3xl font-heading font-bold text-brand-dark">Dipercaya oleh Para Executive Chef</h2>
+                        </Reveal>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            
+                            {/* Testimoni 1 */}
+                            <Reveal delay="delay-100" className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Chef Marcus" className="w-14 h-14 rounded-full object-cover bg-gray-100" />
+                                    <div>
+                                        <h4 className="font-heading font-bold text-brand-dark text-lg">Chef Marcus Thorne</h4>
+                                        <p className="text-sm text-brand-text">Executive Chef, The Meridian</p>
+                                    </div>
+                                </div>
+                                <p className="text-brand-text italic leading-relaxed">
+                                    "Dapur MBG membawa presisi klinis ke dalam kekacauan kami. Fitur kalkulasi biaya resep saja telah menghemat 4% biaya makanan kami pada kuartal pertama. Ini satu-satunya ERP yang benar-benar memahami alur kerja dapur nyata."
+                                </p>
+                            </Reveal>
+
+                            {/* Testimoni 2 */}
+                            <Reveal delay="delay-200" className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <img src="https://images.unsplash.com/photo-1581299894007-aaa50297cf16?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Sarah Jenkins" className="w-14 h-14 rounded-full object-cover bg-gray-100" />
+                                    <div>
+                                        <h4 className="font-heading font-bold text-brand-dark text-lg">Sarah Jenkins</h4>
+                                        <p className="text-sm text-brand-text">Culinary Director, Apex Hospitality</p>
+                                    </div>
+                                </div>
+                                <p className="text-brand-text italic leading-relaxed">
+                                    "Mengelola inventaris di lima konsep restoran yang berbeda dulunya adalah mimpi buruk sebelum Dapur MBG. Sekarang, saya memiliki visibilitas penuh dari satu dashboard. Stabilitas dan kejelasan sistem ini tidak tertandingi."
+                                </p>
+                            </Reveal>
+
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Komponen CTA Bawah ---
+        const FooterCTA = () => {
+            return (
+                <section className="py-20 bg-brand-gray/30 border-t border-gray-100">
+                    <div className="max-w-4xl mx-auto px-4 text-center">
+                        <Reveal>
+                            <h2 className="text-3xl font-heading font-bold text-brand-dark mb-4">Siap Mengoptimalkan Dapur Anda?</h2>
+                            <p className="text-lg text-brand-text mb-10">
+                                Bergabunglah dengan restoran kelas atas yang beralih ke ERP presisi klinis dari Dapur MBG.
+                            </p>
+                            <div className="flex flex-col sm:flex-row justify-center gap-4">
+                                <a href="#" className="inline-flex justify-center items-center px-8 py-3.5 border border-transparent text-base font-medium rounded-md text-white bg-brand-dark hover:bg-brand-dark/90 transition-colors shadow-md">
+                                    Mulai Sekarang
+                                </a>
+                                <a href="#" className="inline-flex justify-center items-center px-8 py-3.5 border border-gray-300 text-base font-medium rounded-md text-brand-dark bg-white hover:bg-gray-50 transition-colors">
+                                    Lihat Harga
+                                </a>
+                            </div>
+                        </Reveal>
+                    </div>
+                </section>
+            );
+        };
+
+        // --- Komponen Footer ---
+        const Footer = () => {
+            return (
+                <footer className="bg-white border-t border-gray-200 py-8">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <p className="text-sm text-gray-500">
+                            © 2026 MBG Kitchen ERP. Hak cipta dilindungi undang-undang.
+                        </p>
+                        <div className="flex space-x-6 text-sm text-gray-500">
+                            <a href="#" className="hover:text-brand-dark transition-colors">Kebijakan Privasi</a>
+                            <a href="#" className="hover:text-brand-dark transition-colors">Syarat Layanan</a>
+                            <a href="#" className="hover:text-brand-dark transition-colors">Status Sistem</a>
+                        </div>
+                    </div>
+                </footer>
+            );
+        };
+
+        // --- Komponen Utama App ---
+        const App = () => {
+            return (
+                <div className="min-h-screen flex flex-col page-transition">
+                    <Navbar />
+                    <main className="flex-grow">
+                        <HeroSection />
+                        <FeaturesSection />
+                        <TestimonialSection />
+                        <FooterCTA />
+                    </main>
+                    <Footer />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

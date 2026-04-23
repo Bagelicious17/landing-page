@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrasi - Pantau Dapur MBG ERP</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Page Transition Animation -->
+    <style>
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-transition {
+            animation: pageFadeIn 0.5s ease-out forwards;
+        }
+    </style>
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0A193A',
+                            light: '#9DCCD5',
+                            yellow: '#F3D38D',
+                            gray: '#F8FAFC',
+                            text: '#334155',
+                            bgLight: '#F4F7FB'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Montserrat', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 25px rgba(0,0,0,0.04)',
+                        'card': '0 10px 40px -10px rgba(0,0,0,0.08)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="font-sans text-brand-text bg-brand-bgLight antialiased min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Helper Komponen Ikon ---
+        const Icon = ({ name, className }) => {
+            const iconRef = useRef(null);
+            
+            useEffect(() => {
+                if (iconRef.current) {
+                    iconRef.current.innerHTML = '';
+                    lucide.createIcons({
+                        icons: { [name]: lucide.icons[name] },
+                        nameAttr: 'data-lucide',
+                        attrs: { class: className, 'stroke-width': 2 }
+                    });
+                    const svgElement = document.querySelector(`[data-lucide="${name}"]`);
+                    if(svgElement && iconRef.current){
+                         const clone = svgElement.cloneNode(true);
+                         iconRef.current.appendChild(clone);
+                         svgElement.remove(); 
+                    }
+                }
+            }, [name, className]);
+
+            // Fallback SVG murni jika lucide telat loading
+            const renderFallbackSvg = () => {
+                switch(name) {
+                    case 'Building2': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>;
+                    case 'MapPin': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
+                    case 'Utensils': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 14h18M3 21h18M5 14v7M19 14v7M12 14v7M7 3v6a5 5 0 0010 0V3M12 3v11"></path></svg>;
+                    case 'User': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>;
+                    case 'Mail': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>;
+                    case 'Phone': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>;
+                    case 'Lock': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>;
+                    case 'Eye': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>;
+                    case 'ShieldCheck': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>;
+                    case 'ArrowLeft': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>;
+                    case 'Settings': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
+                    case 'ChevronDown': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>;
+                    case 'Menu': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>;
+                    case 'X': return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>;
+                    default: return null;
+                }
+            };
+
+            return <div ref={iconRef} className="inline-flex items-center justify-center">{renderFallbackSvg()}</div>;
+        };
+
+        // --- Navbar untuk Registrasi ---
+        const NavbarMinimal = () => {
+            const [isScrolled, setIsScrolled] = useState(false);
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    setIsScrolled(window.scrollY > 20);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            return (
+                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-white py-5 border-b border-gray-200'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex justify-between items-center">
+                            {/* Logo */}
+                            <div className="flex items-center gap-2">
+                                <a href="index.html" className="flex items-center gap-2">
+                                    <img src="../aset/logo-erp-main.png" alt="Logo" className="h-10" />
+                                    <span className="font-heading font-bold text-xl text-brand-dark">Pantau Dapur MBG</span>
+                                </a>
+                            </div>
+
+                            {/* Navigasi Tengah (hidden on mobile) */}
+                            <div className="hidden md:flex space-x-8">
+                                <a href="index.html" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Fitur</a>
+                                <a href="pricing.html" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Harga</a>
+                                <a href="#" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Tentang Kami</a>
+                            </div>
+
+                            {/* Tombol Aksi Desktop */}
+                            <div className="hidden md:flex items-center space-x-4">
+                                <a href="#" className="text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">Masuk</a>
+                                <a href="index.html" className="flex items-center gap-2 text-sm font-medium text-brand-text hover:text-brand-dark transition-colors">
+                                    <Icon name="ArrowLeft" className="w-4 h-4" /> Batal
+                                </a>
+                            </div>
+
+                            {/* Tombol Menu Mobile */}
+                            <div className="md:hidden flex items-center">
+                                <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-brand-dark">
+                                    <Icon name={mobileMenuOpen ? 'X' : 'Menu'} className="w-6 h-6" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Menu Mobile */}
+                    {mobileMenuOpen && (
+                        <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-lg">
+                            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                                <a href="index.html" className="block px-3 py-2 text-base font-medium text-brand-text hover:text-brand-dark hover:bg-gray-50 rounded-md">Fitur</a>
+                                <a href="pricing.html" className="block px-3 py-2 text-base font-medium text-brand-text hover:text-brand-dark hover:bg-gray-50 rounded-md">Harga</a>
+                                <a href="#" className="block px-3 py-2 text-base font-medium text-brand-text hover:text-brand-dark hover:bg-gray-50 rounded-md">Tentang Kami</a>
+                                <div className="mt-4 pt-4 border-t border-gray-100 px-3 flex flex-col gap-2">
+                                    <a href="#" className="block text-center px-3 py-2 text-base font-medium text-brand-dark border border-gray-200 rounded-md">Masuk</a>
+                                    <a href="index.html" className="block text-center px-3 py-2 text-base font-medium bg-brand-dark text-white rounded-md">Batal & Kembali</a>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </nav>
+            );
+        };
+
+        // --- Konten Form Registrasi Tergabung ---
+        const RegistrationForm = () => {
+            const [showPassword, setShowPassword] = useState(false);
+
+            return (
+                <div className="pt-28 pb-12 px-4 sm:px-6 lg:px-8 flex-grow flex items-center justify-center">
+                    <div className="max-w-4xl w-full">
+                        
+                        {/* Header Teks */}
+                        <div className="text-center mb-10">
+                            <h1 className="text-3xl font-heading font-extrabold text-brand-dark mb-3">Mulai Perjalanan Efisiensi Anda</h1>
+                            <p className="text-brand-text">Siapkan data dapur dan profil admin Anda dalam satu langkah mudah.</p>
+                        </div>
+
+                        {/* Card Form */}
+                        <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
+                            
+                            {/* Form Header (Optional) */}
+                            <div className="bg-brand-dark px-8 py-4 border-b border-gray-200">
+                                <h2 className="text-white font-heading font-semibold text-lg flex items-center gap-2">
+                                    Informasi Organisasi & Akun
+                                </h2>
+                            </div>
+
+                            <form className="p-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                    
+                                    {/* --- BAGIAN KIRI: DATA DAPUR --- */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-3 mb-6 pb-2 border-b border-gray-100">
+                                            <div className="w-8 h-8 rounded-md bg-brand-light/20 flex items-center justify-center text-brand-dark">
+                                                <Icon name="Building2" className="w-4 h-4" />
+                                            </div>
+                                            <h3 className="text-lg font-heading font-bold text-brand-dark">1. Data Dapur</h3>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold tracking-wide text-brand-dark uppercase mb-1.5">Nama Dapur / Restoran <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                                    <Icon name="Building2" className="w-4 h-4" />
+                                                </div>
+                                                <input type="text" placeholder="mis. Pusat Persiapan Downtown" className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-brand-dark transition-all text-sm" required />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold tracking-wide text-brand-dark uppercase mb-1.5">Alamat Lengkap <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <div className="absolute top-3.5 left-0 pl-3.5 pointer-events-none text-gray-400">
+                                                    <Icon name="MapPin" className="w-4 h-4" />
+                                                </div>
+                                                <textarea rows="3" placeholder="Jl. Kuliner Raya No. 123&#10;Kota, Provinsi, Kode Pos" className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-brand-dark transition-all text-sm resize-none" required></textarea>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold tracking-wide text-brand-dark uppercase mb-1.5">Tipe Dapur <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                                    <Icon name="Utensils" className="w-4 h-4" />
+                                                </div>
+                                                <select defaultValue="" className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 appearance-none focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-brand-dark transition-all bg-white text-sm" required>
+                                                    <option value="" disabled>Pilih fungsi utama</option>
+                                                    <option value="restaurant">Restoran Dine-in</option>
+                                                    <option value="ghost">Ghost Kitchen / Cloud Kitchen</option>
+                                                    <option value="catering">Katering</option>
+                                                    <option value="commissary">Dapur Pusat (Commissary)</option>
+                                                </select>
+                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                                    <Icon name="ChevronDown" className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* --- BAGIAN KANAN: PROFIL ADMIN --- */}
+                                    <div className="space-y-6 md:border-l md:border-gray-100 md:pl-10">
+                                        <div className="flex items-center gap-3 mb-6 pb-2 border-b border-gray-100">
+                                            <div className="w-8 h-8 rounded-md bg-brand-yellow/30 flex items-center justify-center text-brand-dark">
+                                                <Icon name="User" className="w-4 h-4" />
+                                            </div>
+                                            <h3 className="text-lg font-heading font-bold text-brand-dark">2. Profil Admin</h3>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold tracking-wide text-brand-dark uppercase mb-1.5">Nama Lengkap <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                                    <Icon name="User" className="w-4 h-4" />
+                                                </div>
+                                                <input type="text" placeholder="mis. Jane Doe" className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-brand-dark transition-all text-sm" required />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold tracking-wide text-brand-dark uppercase mb-1.5">Alamat Email (Bisnis) <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                                    <Icon name="Mail" className="w-4 h-4" />
+                                                </div>
+                                                <input type="email" placeholder="jane.doe@kitchen.com" className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-brand-dark transition-all text-sm" required />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold tracking-wide text-brand-dark uppercase mb-1.5">Nomor Telepon <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                                    <Icon name="Phone" className="w-4 h-4" />
+                                                </div>
+                                                <input type="tel" placeholder="+62 812-3456-7890" className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-brand-dark transition-all text-sm" required />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold tracking-wide text-brand-dark uppercase mb-1.5">Kata Sandi Baru <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                                    <Icon name="Lock" className="w-4 h-4" />
+                                                </div>
+                                                <input 
+                                                    type={showPassword ? "text" : "password"} 
+                                                    placeholder="••••••••" 
+                                                    className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-brand-dark transition-all text-sm" 
+                                                    required 
+                                                />
+                                                <div 
+                                                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-brand-dark cursor-pointer transition-colors"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                >
+                                                    <Icon name="Eye" className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-1.5">Minimal 8 karakter (termasuk 1 angka & 1 karakter spesial).</p>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+
+                                {/* --- TOMBOL SUBMIT & FOOTER FORM --- */}
+                                <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-6">
+                                    <div className="flex items-center gap-2 text-gray-500 text-xs sm:text-sm">
+                                        <Icon name="ShieldCheck" className="w-5 h-5 text-green-600" /> 
+                                        <span>Data Anda dilindungi dengan Enkripsi SSL 256-bit.</span>
+                                    </div>
+                                    <button type="button" onClick={() => window.location.href='payment.html'} className="w-full sm:w-auto bg-brand-dark text-white px-8 py-3.5 rounded-lg font-semibold hover:bg-brand-dark/90 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                                        Lanjut ke Pembayaran <Icon name="ArrowRight" className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <p className="text-center text-sm text-gray-500 mt-6">
+                            Sudah memiliki akun? <a href="#" className="font-semibold text-brand-dark hover:underline">Masuk di sini</a>.
+                        </p>
+
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Komponen Footer ---
+        const Footer = () => {
+            return (
+                <footer className="w-full py-6">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-gray-400">
+                        <p> 2026 MBG Kitchen ERP. Hak cipta dilindungi undang-undang.</p>
+                    </div>
+                </footer>
+            );
+        };
+
+        // --- Render Utama ---
+        const App = () => {
+            return (
+                <div className="min-h-screen flex flex-col page-transition">
+                    <NavbarMinimal />
+                    <RegistrationForm />
+                    <Footer />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
